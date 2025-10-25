@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Phone, Mail, Lock, User, AlertCircle, Check } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/firebase-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -82,48 +87,50 @@ export default function RegisterPage() {
         </div>
 
         {/* Register Form */}
-        <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">Crear Cuenta</CardTitle>
+            <CardDescription>
+              Completa tu información para crear una cuenta en el sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-                <span className="text-red-700">{error}</span>
-              </div>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             {/* Nombres */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre
-                </label>
+              <div className="space-y-2">
+                <Label htmlFor="firstName">Nombre</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
                     id="firstName"
                     name="firstName"
                     type="text"
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors"
+                    className="pl-9"
                     placeholder="Juan"
                   />
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Apellido
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Apellido</Label>
+                <Input
                   id="lastName"
                   name="lastName"
                   type="text"
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors"
                   placeholder="Pérez"
                 />
               </div>
@@ -265,17 +272,17 @@ export default function RegisterPage() {
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={isLoading || !formData.acceptTerms || !isValidPassword(formData.password) || formData.password !== formData.confirmPassword}
-              className="w-full bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-red-600 hover:bg-red-700"
+              size="lg"
             >
               {isLoading ? 'Registrando...' : 'Crear Cuenta'}
-            </button>
-          </form>
-        </div>
-
-        {/* Login Link */}
+            </Button>
+            </form>
+          </CardContent>
+        </Card>        {/* Login Link */}
         <div className="text-center">
           <p className="text-gray-600">
             ¿Ya tienes una cuenta?{' '}

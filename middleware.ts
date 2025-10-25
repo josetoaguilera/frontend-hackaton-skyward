@@ -1,38 +1,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Rutas que requieren autenticación
-const protectedRoutes = ['/dashboard', '/emergency-request', '/profile', '/settings']
-
-// Rutas que solo deben ser accesibles sin autenticación
-const authRoutes = ['/login', '/register']
+// Este middleware es más simple porque Firebase maneja la autenticación del lado del cliente
+// Solo necesitamos redirigir rutas básicas
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const token = request.cookies.get('auth_token')?.value || request.headers.get('authorization')
-
-  // Verificar si la ruta requiere autenticación
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  )
-  
-  // Verificar si es una ruta de autenticación
-  const isAuthRoute = authRoutes.some(route => 
-    pathname.startsWith(route)
-  )
-
-  // Si es una ruta protegida y no hay token, redirigir al login
-  if (isProtectedRoute && !token) {
-    const url = new URL('/login', request.url)
-    url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
-  }
-
-  // Si es una ruta de auth y hay token, redirigir al dashboard
-  if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
+  // Permitir que todas las rutas pasen
+  // La verificación de autenticación se hace del lado del cliente con Firebase
   return NextResponse.next()
 }
 
