@@ -66,7 +66,7 @@ export default function LoginPage() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
-            Sistema de Emergencias 911
+            Sistema de Emergencias 1619
           </h2>
           <p className="mt-2 text-gray-600">
             Accede a tu panel de control
@@ -176,7 +176,7 @@ export default function LoginPage() {
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-800">
             <span className="font-medium">¿Es una emergencia real?</span><br />
-            Si estás en peligro inmediato, llama al 911 directamente desde tu teléfono.
+            Si estás en peligro inmediato, llama al 1619 directamente desde tu teléfono.
           </AlertDescription>
         </Alert>
       </div>

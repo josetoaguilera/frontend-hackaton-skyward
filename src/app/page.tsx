@@ -11,7 +11,7 @@ const features = [
   {
     icon: Phone,
     title: 'Llamadas de Emergencia',
-    description: 'Sistema integrado para gestionar llamadas de emergencia 911 de manera eficiente y rápida.'
+    description: 'Sistema integrado para gestionar llamadas de emergencia 1619 de manera eficiente y rápida.'
   },
   {
     icon: Shield,
@@ -51,7 +51,7 @@ export default function Home() {
             className="text-2xl font-bold text-red-600 flex items-center"
           >
             <Phone className="h-8 w-8 mr-2" />
-            Sistema 911
+            Sistema 1619
           </motion.div>
           
           <motion.div
@@ -83,7 +83,7 @@ export default function Home() {
           >
             Sistema de Emergencias{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">
-              911
+              1619
             </span>
           </motion.h1>
           
@@ -184,7 +184,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto text-center">
           <div className="text-2xl font-bold mb-4 flex items-center justify-center">
             <Phone className="h-6 w-6 mr-2" />
-            Sistema 911
+            Sistema 1619
           </div>
           <p className="text-gray-400 mb-8">
             Tecnología que salva vidas, cuando cada segundo cuenta.
@@ -203,7 +203,7 @@ export default function Home() {
           <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-yellow-800">
             <p className="font-bold">¿EMERGENCIA REAL?</p>
-            <p>Si estás en peligro inmediato, llama directamente al 911 desde tu teléfono.</p>
+            <p>Si estás en peligro inmediato, llama directamente al 1619 desde tu teléfono.</p>
           </div>
         </div>
       </div>
