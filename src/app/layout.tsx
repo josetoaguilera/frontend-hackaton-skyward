@@ -6,10 +6,10 @@ import { AuthProvider } from '@/components/AuthProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Sistema de Emergencias 911 - Registro y Gestión',
+  title: 'Sistema de Emergencias 1619 - Registro y Gestión',
   description: 'Plataforma integral para gestionar emergencias. Registra tu información médica y de contacto para recibir asistencia rápida cuando más lo necesites.',
-  keywords: 'emergencias, 911, sistema de emergencias, salud, seguridad, primeros auxilios',
-  authors: [{ name: 'Sistema 911' }],
+  keywords: 'emergencias, 1619, sistema de emergencias, salud, seguridad, primeros auxilios',
+  authors: [{ name: 'Sistema 1619' }],
   viewport: 'width=device-width, initial-scale=1',
 }
 

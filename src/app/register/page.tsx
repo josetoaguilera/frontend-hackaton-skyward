@@ -285,7 +285,7 @@ export default function RegisterPage() {
             <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5" />
             <div className="text-sm text-yellow-800">
               <p className="font-medium">¿Es una emergencia real?</p>
-              <p>Si estás en peligro inmediato, llama al 911 directamente desde tu teléfono.</p>
+              <p>Si estás en peligro inmediato, llama al 1619 directamente desde tu teléfono.</p>
             </div>
           </div>
         </div>
