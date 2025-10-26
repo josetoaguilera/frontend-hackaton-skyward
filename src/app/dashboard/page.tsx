@@ -21,7 +21,7 @@ import {
   InfoItem,
   EmptySection 
 } from '@/components/dashboard/DashboardComponents';
-import { MapPin, Phone, Heart, CreditCard, Shield, User } from 'lucide-react';
+import { MapPin, Phone, Heart, CreditCard, Shield, User, AlertCircle } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -244,6 +244,53 @@ export default function DashboardPage() {
               <EmptySection
                 message="No hay contactos de emergencia registrados"
                 onAdd={() => router.push('/onboarding?step=3')}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Emergency Events */}
+          <CollapsibleSection 
+            title="Eventos de Emergencia" 
+            icon={<AlertCircle className="w-5 h-5 text-blue-600" />}
+            badge={`${emergencyEvents.length} ${emergencyEvents.length === 1 ? 'evento' : 'eventos'}`}
+          >
+            {emergencyEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {emergencyEvents.map((event) => (
+                  <DataCard
+                    key={event.id}
+                    title={event.type}
+                    subtitle={`Estado: ${event.status}`}
+                  >
+                    <InfoItem 
+                      label="Prioridad" 
+                      value={event.priority} 
+                    />
+                    <InfoItem 
+                      label="Estado" 
+                      value={event.status} 
+                    />
+                    <InfoItem label="Descripción" value={event.description} />
+                    {event.location?.address && (
+                      <InfoItem label="Ubicación" value={event.location.address} />
+                    )}
+                    <InfoItem 
+                      label="Fecha" 
+                      value={new Date(event.createdAt).toLocaleString()} 
+                    />
+                    {event.resolvedAt && (
+                      <InfoItem 
+                        label="Resuelto" 
+                        value={new Date(event.resolvedAt).toLocaleString()} 
+                      />
+                    )}
+                  </DataCard>
+                ))}
+              </div>
+            ) : (
+              <EmptySection
+                message="No hay eventos de emergencia registrados"
+                onAdd={() => router.push('/emergency-request')}
               />
             )}
           </CollapsibleSection>
