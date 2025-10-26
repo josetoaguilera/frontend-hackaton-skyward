@@ -1,3 +1,26 @@
+// Transform emergency event from API response to EmergencyEvent type
+function transformEmergencyEventFromApi(apiEvent: any): EmergencyEvent {
+  return {
+    id: apiEvent.id,
+    userId: apiEvent.user_id,
+    type: apiEvent.event_type,
+    priority: 'medium', // Default, since not present in API
+    status: apiEvent.status === 'active' ? 'in_progress' : apiEvent.status,
+    description: apiEvent.description,
+    location: apiEvent.location,
+    contactInfo: {
+      phone: apiEvent.users?.phone_number || '',
+      alternativePhone: undefined
+    },
+    medicalInfo: undefined,
+    audioRecordingUrl: apiEvent.audio_recording_url || undefined,
+    eventType: apiEvent.event_type,
+    createdAt: apiEvent.created_at,
+    updatedAt: apiEvent.updated_at,
+    resolvedAt: undefined,
+    assignedAgentId: undefined
+  };
+}
 import { 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -182,7 +205,12 @@ class FirebaseAuthClient {
   async getEmergencyRequests(): Promise<EmergencyRequest[]> {
     try {
       const response = await this.fetchWithAuth('/v1/emergency-events');
-      return await response.json();
+      const apiResponse = await response.json();
+      if (!apiResponse.success || !Array.isArray(apiResponse.data)) {
+        throw new Error('API request was not successful');
+      }
+      // Transform each event if needed
+      return apiResponse.data.map(transformEmergencyEventFromApi);
     } catch (error: any) {
       console.error('Get emergency requests error:', error);
       throw new Error(error.message || 'Error al obtener las solicitudes');
