@@ -27,13 +27,11 @@ export default function MedicalInfoExample() {
   });
 
   const [insuranceForm, setInsuranceForm] = useState({
-    provider: '',
-    policyNumber: '',
-    groupNumber: '',
-    coverageType: '',
-    startDate: '',
-    endDate: '',
-    isPrimary: false,
+  primary_provider: false,
+  provider_name: '',
+  plan_name: '',
+  member_id: '',
+  coverage_info: '',
   });
 
   const [allergyInput, setAllergyInput] = useState('');
@@ -67,13 +65,11 @@ export default function MedicalInfoExample() {
     try {
       await createInsurance(insuranceForm);
       setInsuranceForm({
-        provider: '',
-        policyNumber: '',
-        groupNumber: '',
-        coverageType: '',
-        startDate: '',
-        endDate: '',
-        isPrimary: false,
+        primary_provider: false,
+        provider_name: '',
+        plan_name: '',
+        member_id: '',
+        coverage_info: '',
       });
       setIsCreatingInsurance(false);
     } catch (err) {
@@ -322,73 +318,56 @@ export default function MedicalInfoExample() {
             <CardContent>
               <form onSubmit={handleInsuranceSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="primary_provider"
+                      checked={insuranceForm.primary_provider}
+                      onChange={(e) => setInsuranceForm({ ...insuranceForm, primary_provider: e.target.checked })}
+                      className="rounded border-gray-300"
+                    />
+                    <Label htmlFor="primary_provider" className="cursor-pointer">
+                      ¿Es proveedor principal?
+                    </Label>
+                  </div>
                   <div>
-                    <Label htmlFor="provider">Proveedor *</Label>
+                    <Label htmlFor="provider_name">Nombre del Proveedor *</Label>
                     <Input
-                      id="provider"
-                      value={insuranceForm.provider}
-                      onChange={(e) => setInsuranceForm({ ...insuranceForm, provider: e.target.value })}
+                      id="provider_name"
+                      value={insuranceForm.provider_name}
+                      onChange={(e) => setInsuranceForm({ ...insuranceForm, provider_name: e.target.value })}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="policyNumber">Número de Póliza *</Label>
+                    <Label htmlFor="plan_name">Nombre del Plan *</Label>
                     <Input
-                      id="policyNumber"
-                      value={insuranceForm.policyNumber}
-                      onChange={(e) => setInsuranceForm({ ...insuranceForm, policyNumber: e.target.value })}
+                      id="plan_name"
+                      value={insuranceForm.plan_name}
+                      onChange={(e) => setInsuranceForm({ ...insuranceForm, plan_name: e.target.value })}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="groupNumber">Número de Grupo</Label>
+                    <Label htmlFor="member_id">ID de Miembro *</Label>
                     <Input
-                      id="groupNumber"
-                      value={insuranceForm.groupNumber}
-                      onChange={(e) => setInsuranceForm({ ...insuranceForm, groupNumber: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="coverageType">Tipo de Cobertura *</Label>
-                    <Input
-                      id="coverageType"
-                      value={insuranceForm.coverageType}
-                      onChange={(e) => setInsuranceForm({ ...insuranceForm, coverageType: e.target.value })}
-                      placeholder="Ej: Completa, Básica, etc."
+                      id="member_id"
+                      value={insuranceForm.member_id}
+                      onChange={(e) => setInsuranceForm({ ...insuranceForm, member_id: e.target.value })}
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="startDate">Fecha de Inicio *</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={insuranceForm.startDate}
-                      onChange={(e) => setInsuranceForm({ ...insuranceForm, startDate: e.target.value })}
+                  <div className="md:col-span-2">
+                    <Label htmlFor="coverage_info">Información de Cobertura *</Label>
+                    <Textarea
+                      id="coverage_info"
+                      value={insuranceForm.coverage_info}
+                      onChange={(e) => setInsuranceForm({ ...insuranceForm, coverage_info: e.target.value })}
                       required
+                      rows={2}
+                      placeholder="Detalles sobre la cobertura, restricciones, etc."
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="endDate">Fecha de Fin</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={insuranceForm.endDate}
-                      onChange={(e) => setInsuranceForm({ ...insuranceForm, endDate: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isPrimaryInsurance"
-                    checked={insuranceForm.isPrimary}
-                    onChange={(e) => setInsuranceForm({ ...insuranceForm, isPrimary: e.target.checked })}
-                    className="rounded border-gray-300"
-                  />
-                  <Label htmlFor="isPrimaryInsurance" className="cursor-pointer">
-                    Establecer como seguro principal
-                  </Label>
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit">Guardar</Button>
@@ -403,17 +382,14 @@ export default function MedicalInfoExample() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {insurances.map((insurance) => (
-            <Card key={insurance.id} className={insurance.isPrimary ? 'border-blue-500' : ''}>
+            <Card key={insurance.id}>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h4 className="font-semibold text-lg">{insurance.provider}</h4>
-                    <p className="text-sm text-gray-500">{insurance.coverageType}</p>
+                    <h4 className="font-semibold text-lg">{insurance.primary_provider}</h4>
+                    <p className="text-sm text-gray-500">{insurance.provider_name} - {insurance.plan_name}</p>
                   </div>
                   <div className="flex gap-2">
-                    {insurance.isPrimary && (
-                      <Badge className="bg-blue-600">Principal</Badge>
-                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -426,24 +402,12 @@ export default function MedicalInfoExample() {
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Póliza:</span>
-                    <span className="font-mono">{insurance.policyNumber}</span>
+                    <span className="text-gray-600">ID Miembro:</span>
+                    <span className="font-mono">{insurance.member_id}</span>
                   </div>
-                  {insurance.groupNumber && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Grupo:</span>
-                      <span className="font-mono">{insurance.groupNumber}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(insurance.startDate).toLocaleDateString('es-ES')}</span>
-                    {insurance.endDate && (
-                      <>
-                        <span>→</span>
-                        <span>{new Date(insurance.endDate).toLocaleDateString('es-ES')}</span>
-                      </>
-                    )}
+                  <div>
+                    <span className="text-gray-600">Cobertura:</span>
+                    <span className="font-mono">{insurance.coverage_info}</span>
                   </div>
                 </div>
               </CardContent>

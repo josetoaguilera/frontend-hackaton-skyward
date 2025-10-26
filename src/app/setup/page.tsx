@@ -65,8 +65,7 @@ export default function SetupDataPage() {
         phone: '+56912345678',
         relationship: 'Madre',
         email: 'maria@example.com',
-        address: 'Av. Providencia 1234, Santiago',
-        isPrimary: true
+        // No address or isPrimary field
       });
 
       await apiClient.createEmergencyContact({
@@ -105,13 +104,11 @@ export default function SetupDataPage() {
       // 4. Agregar seguro de salud
       console.log('🛡️ Agregando seguro...');
       await apiClient.createHealthInsurance({
-        provider: 'Isapre Cruz Blanca',
-        policyNumber: 'POL-123456789',
-        groupNumber: 'GRP-001',
-        coverageType: 'Cobertura Completa',
-        startDate: '2024-01-01',
-        endDate: '2025-12-31',
-        isPrimary: true
+        primary_provider: true,
+        provider_name: 'Isapre Cruz Blanca',
+        plan_name: 'Cobertura Completa',
+        member_id: 'POL-123456789',
+        coverage_info: '2024-01-01',
       });
       
       setResults(prev => ({ ...prev, insurance: 'success' }));
@@ -125,22 +122,17 @@ export default function SetupDataPage() {
       // 5. Agregar cuentas bancarias
       console.log('💳 Agregando cuentas bancarias...');
       await apiClient.createBankAccount({
-        bankName: 'Banco de Chile',
-        accountNumber: '1234567890',
-        accountType: 'checking',
-        accountHolderName: 'Juan Pérez',
-        routingNumber: '001',
-        swiftCode: 'BCHXCLRM',
-        isPrimary: true
+        bank_name: 'Banco de Chile',
+        account_type: 'checking',
+        account_number: '1234567890',
+        rut: '12.345.678-9',
       });
 
       await apiClient.createBankAccount({
-        bankName: 'Banco Santander',
-        accountNumber: '9876543210',
-        accountType: 'savings',
-        accountHolderName: 'Juan Pérez',
-        routingNumber: '002',
-        swiftCode: 'SANXCLRM'
+        bank_name: 'Banco Santander',
+        account_type: 'savings',
+        account_number: '9876543210',
+        rut: '12.345.678-9',
       });
       
       setResults(prev => ({ ...prev, banking: 'success' }));

@@ -15,12 +15,8 @@ import type {
   User as UserType
 } from '@/types';
 import { Button } from '@/components/ui/button';
-import { 
-  CollapsibleSection, 
-  DataCard, 
-  InfoItem,
-  EmptySection 
-} from '@/components/dashboard/DashboardComponents';
+import { CollapsibleSection, DataCard, InfoItem, EmptySection } from '@/components/dashboard/DashboardComponents';
+import { EditablePhoneItem } from '@/components/dashboard/EditablePhoneItem';
 import { MapPin, Phone, Heart, CreditCard, Shield, User, AlertCircle } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -106,7 +102,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Bienvenido, {user?.firstName || 'Usuario'} 👋
+            Bienvenido, {user?.fullName || 'Usuario'} 👋
           </h1>
           <p className="text-gray-600">
             Gestiona tu información personal y de emergencia
@@ -154,15 +150,10 @@ export default function DashboardPage() {
           >
             {user ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InfoItem label="Nombre" value={`${user.firstName} ${user.lastName}`} />
+                <InfoItem label="Nombre" value={user.fullName} />
                 <InfoItem label="Email" value={user.email} />
-                <InfoItem label="Teléfono" value={user.phone || user.phoneNumber || 'No especificado'} />
+                <EditablePhoneItem user={user} onUpdated={loadAllData} />
                 <InfoItem label="RUT" value={user.rut || 'No especificado'} />
-                <InfoItem label="Rol" value={user.role} />
-                <InfoItem 
-                  label="Estado" 
-                  value={user.isActive ? 'Activo' : 'Inactivo'}
-                />
               </div>
             ) : (
               <EmptySection
@@ -223,8 +214,7 @@ export default function DashboardPage() {
                 {emergencyContacts.map((contact) => (
                   <DataCard
                     key={contact.id}
-                    title={contact.name}
-                    isPrimary={contact.isPrimary}
+                      title={contact.name}
                     onEdit={() => router.push(`/onboarding?step=3&edit=${contact.id}`)}
                     onDelete={async () => {
                       if (confirm('¿Eliminar este contacto?')) {
@@ -236,7 +226,7 @@ export default function DashboardPage() {
                     <InfoItem label="Teléfono" value={contact.phone} />
                     <InfoItem label="Relación" value={contact.relationship} />
                     {contact.email && <InfoItem label="Email" value={contact.email} />}
-                    {contact.address && <InfoItem label="Dirección" value={contact.address} />}
+                      {/* No address field in emergency contact model */}
                   </DataCard>
                 ))}
               </div>
@@ -346,28 +336,22 @@ export default function DashboardPage() {
             {healthInsurances.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {healthInsurances.map((insurance) => (
-                  <DataCard
-                    key={insurance.id}
-                    title={insurance.provider}
-                    isPrimary={insurance.isPrimary}
-                    onEdit={() => router.push(`/onboarding?step=5&edit=${insurance.id}`)}
-                    onDelete={async () => {
-                      if (confirm('¿Eliminar este seguro?')) {
-                        await apiClient.deleteHealthInsurance(insurance.id);
-                        await loadAllData();
-                      }
-                    }}
-                  >
-                    <InfoItem label="Número de Póliza" value={insurance.policyNumber} />
-                    {insurance.groupNumber && (
-                      <InfoItem label="Número de Grupo" value={insurance.groupNumber} />
-                    )}
-                    <InfoItem label="Tipo de Cobertura" value={insurance.coverageType} />
-                    <InfoItem label="Fecha de Inicio" value={new Date(insurance.startDate).toLocaleDateString()} />
-                    {insurance.endDate && (
-                      <InfoItem label="Fecha de Fin" value={new Date(insurance.endDate).toLocaleDateString()} />
-                    )}
-                  </DataCard>
+                    <DataCard
+                      key={insurance.id}
+                      title={insurance.provider_name}
+                      isPrimary={insurance.primary_provider}
+                      onEdit={() => router.push(`/onboarding?step=5&edit=${insurance.id}`)}
+                      onDelete={async () => {
+                        if (confirm('¿Eliminar este seguro?')) {
+                          await apiClient.deleteHealthInsurance(insurance.id);
+                          await loadAllData();
+                        }
+                      }}
+                    >
+                      <InfoItem label="Plan" value={insurance.plan_name} />
+                      <InfoItem label="ID de Miembro" value={insurance.member_id} />
+                      <InfoItem label="Cobertura" value={insurance.coverage_info} />
+                    </DataCard>
                 ))}
               </div>
             ) : (

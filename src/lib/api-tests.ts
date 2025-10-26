@@ -37,8 +37,7 @@ export async function testGetProfile() {
 export async function testUpdateProfile() {
   console.log('Testing update profile...');
   const updated = await apiClient.updateProfile({
-    firstName: 'Updated',
-    lastName: 'Name'
+    fullName: 'Updated Name'
   });
   console.log('Updated profile:', updated);
   return updated;
@@ -115,14 +114,13 @@ export async function testEmergencyContactsCRUD() {
   console.log('Testing emergency contacts CRUD...');
   
   // Create
-  const newContact = await apiClient.createEmergencyContact({
-    name: 'Test Contact',
-    phone: '+56912345678',
-    relationship: 'Friend',
-    email: 'test@example.com',
-    address: '123 Test St',
-    isPrimary: true
-  });
+        const testContact = {
+        name: 'Test Contact',
+        phone: '+1234567890',
+        relationship: 'Friend',
+        email: 'test@example.com',
+      };
+  const newContact = await apiClient.createEmergencyContact(testContact);
   console.log('Created contact:', newContact);
   
   // Read all

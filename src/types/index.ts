@@ -1,9 +1,14 @@
+// Generic API response wrapper
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
+
 // Tipos para la autenticación
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   phone?: string;
   rut?: string;
   phoneNumber?: string;
@@ -13,11 +18,24 @@ export interface User {
   updatedAt: string;
 }
 
+// Tipo para las respuestas de la API (snake_case)
+export interface UserApiResponse {
+  id: string;
+  email: string;
+  full_name: string;
+  phone?: string;
+  rut?: string;
+  phone_number?: string;
+  role: 'admin' | 'user' | 'agent';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface RegisterData {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   phone?: string;
 }
 
@@ -102,7 +120,6 @@ export interface EmergencyContact {
   name: string;
   phone: string;
   relationship: string;
-  isPrimary: boolean;
 }
 
 export interface MedicalInfo {
@@ -142,6 +159,22 @@ export interface Address {
   updatedAt: string;
 }
 
+// API response type for Address (snake_case)
+export interface AddressApiResponse {
+  id: string;
+  user_id: string;
+  street_address: string;
+  city: string;
+  region: string;
+  country: string;
+  postal_code: string;
+  is_primary: boolean;
+  address_type?: string;
+  additional_info?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CreateAddressData {
   street: string;
   city: string;
@@ -164,10 +197,20 @@ export interface EmergencyContactData {
   phone: string;
   relationship: string;
   email?: string;
-  address?: string;
-  isPrimary?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// API response type for EmergencyContact (snake_case)
+export interface EmergencyContactApiResponse {
+  id: string;
+  user_id: string;
+  contact_name: string;
+  phone_number: string;
+  relationship: string;
+  email?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateEmergencyContactData {
@@ -175,8 +218,6 @@ export interface CreateEmergencyContactData {
   phone: string;
   relationship: string;
   email?: string;
-  address?: string;
-  isPrimary?: boolean;
 }
 
 export interface UpdateEmergencyContactData extends Partial<CreateEmergencyContactData> {}
@@ -261,13 +302,10 @@ export interface BankAccount {
 }
 
 export interface CreateBankAccountData {
-  bankName: string;
-  accountNumber: string;
-  accountType: 'checking' | 'savings' | 'other';
-  accountHolderName: string;
-  routingNumber?: string;
-  swiftCode?: string;
-  isPrimary?: boolean;
+  bank_name: string;
+  account_type: string;
+  account_number: string;
+  rut: string;
 }
 
 export interface UpdateBankAccountData extends Partial<CreateBankAccountData> {}
@@ -276,25 +314,21 @@ export interface UpdateBankAccountData extends Partial<CreateBankAccountData> {}
 export interface HealthInsurance {
   id: string;
   userId: string;
-  provider: string;
-  policyNumber: string;
-  groupNumber?: string;
-  coverageType: string;
-  startDate: string;
-  endDate?: string;
-  isPrimary: boolean;
+  primary_provider: boolean;
+  provider_name: string;
+  plan_name: string;
+  member_id: string;
+  coverage_info: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateHealthInsuranceData {
-  provider: string;
-  policyNumber: string;
-  groupNumber?: string;
-  coverageType: string;
-  startDate: string;
-  endDate?: string;
-  isPrimary?: boolean;
+  primary_provider: boolean;
+  provider_name: string;
+  plan_name: string;
+  member_id: string;
+  coverage_info: string;
 }
 
 export interface UpdateHealthInsuranceData extends Partial<CreateHealthInsuranceData> {}

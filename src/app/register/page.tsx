@@ -13,8 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -103,35 +102,20 @@ export default function RegisterPage() {
               </Alert>
             )}
 
-            {/* Nombres */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Nombre</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="pl-9"
-                    placeholder="Juan"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Apellido</Label>
+            {/* Nombre Completo */}
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Nombre Completo</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  id="lastName"
-                  name="lastName"
+                  id="fullName"
+                  name="fullName"
                   type="text"
                   required
-                  value={formData.lastName}
+                  value={formData.fullName}
                   onChange={handleChange}
-                  placeholder="Pérez"
+                  className="pl-9"
+                  placeholder="Juan Pérez"
                 />
               </div>
             </div>

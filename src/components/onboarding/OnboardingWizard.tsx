@@ -27,12 +27,12 @@ export default function OnboardingWizard() {
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
 
   // Estados para cada paso
-  const [personalInfo, setPersonalInfo] = useState({ firstName: '', lastName: '', phone: '', rut: '' });
+  const [personalInfo, setPersonalInfo] = useState({ fullName: '', phone: '', rut: '' });
   const [addresses, setAddresses] = useState([{ street: '', city: '', state: '', country: 'Chile', postalCode: '', label: 'Casa' }]);
   const [emergencyContacts, setEmergencyContacts] = useState([{ name: '', phone: '', relationship: '', email: '' }]);
   const [medicalInfo, setMedicalInfo] = useState({ bloodType: '', allergies: [''], medications: [''], conditions: [''], notes: '' });
-  const [insurance, setInsurance] = useState({ provider: '', policyNumber: '', coverageType: '', startDate: '' });
-  const [bankAccount, setBankAccount] = useState({ bankName: '', accountNumber: '', accountType: 'checking', accountHolderName: '' });
+  const [insurance, setInsurance] = useState({ primary_provider: false, provider_name: '', plan_name: '', member_id: '', coverage_info: '' });
+  const [bankAccount, setBankAccount] = useState({ bank_name: '', account_type: '', account_number: '', rut: '' });
 
   const steps: OnboardingStep[] = [
     { id: 'personal', title: 'Información Personal', description: 'Completa tu información básica', completed: completedSteps.has('personal') },
@@ -62,11 +62,10 @@ export default function OnboardingWizard() {
         apiClient.getBankAccounts().catch(() => []),
       ]);
 
-      if (userProfile?.firstName && userProfile?.lastName) {
+      if (userProfile?.fullName) {
         completed.add('personal');
         setPersonalInfo({
-          firstName: userProfile.firstName,
-          lastName: userProfile.lastName,
+          fullName: userProfile.fullName,
           phone: userProfile.phone || '',
           rut: userProfile.rut || '',
         });
@@ -97,8 +96,7 @@ export default function OnboardingWizard() {
     setError('');
     try {
       await apiClient.updateProfile({
-        firstName: personalInfo.firstName,
-        lastName: personalInfo.lastName,
+        fullName: personalInfo.fullName,
         phone: personalInfo.phone,
         rut: personalInfo.rut,
       });
@@ -187,12 +185,13 @@ export default function OnboardingWizard() {
     setLoading(true);
     setError('');
     try {
-      if (insurance.provider && insurance.policyNumber) {
+      if (insurance.provider_name && insurance.plan_name && insurance.member_id && insurance.coverage_info) {
         await apiClient.createHealthInsurance({
-          provider: insurance.provider,
-          policyNumber: insurance.policyNumber,
-          coverageType: insurance.coverageType,
-          startDate: insurance.startDate,
+          primary_provider: insurance.primary_provider,
+          provider_name: insurance.provider_name,
+          plan_name: insurance.plan_name,
+          member_id: insurance.member_id,
+          coverage_info: insurance.coverage_info,
         });
       }
       setCompletedSteps(prev => new Set(prev).add('insurance'));
@@ -209,12 +208,12 @@ export default function OnboardingWizard() {
     setLoading(true);
     setError('');
     try {
-      if (bankAccount.bankName && bankAccount.accountNumber) {
+      if (bankAccount.bank_name && bankAccount.account_number && bankAccount.account_type && bankAccount.rut) {
         await apiClient.createBankAccount({
-          bankName: bankAccount.bankName,
-          accountNumber: bankAccount.accountNumber,
-          accountType: bankAccount.accountType as 'checking' | 'savings' | 'other',
-          accountHolderName: bankAccount.accountHolderName,
+          bank_name: bankAccount.bank_name,
+          account_type: bankAccount.account_type,
+          account_number: bankAccount.account_number,
+          rut: bankAccount.rut,
         });
       }
       setCompletedSteps(prev => new Set(prev).add('banking'));
@@ -331,27 +330,15 @@ export default function OnboardingWizard() {
             {/* Paso 1: Información Personal */}
             {steps[currentStep].id === 'personal' && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">Nombre *</Label>
-                    <Input
-                      id="firstName"
-                      value={personalInfo.firstName}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
-                      placeholder="Juan"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Apellido *</Label>
-                    <Input
-                      id="lastName"
-                      value={personalInfo.lastName}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
-                      placeholder="Pérez"
-                      required
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="fullName">Nombre Completo *</Label>
+                  <Input
+                    id="fullName"
+                    value={personalInfo.fullName}
+                    onChange={(e) => setPersonalInfo({ ...personalInfo, fullName: e.target.value })}
+                    placeholder="Juan Pérez"
+                    required
+                  />
                 </div>
                 <div>
                   <Label htmlFor="phone">Teléfono</Label>
@@ -641,40 +628,49 @@ export default function OnboardingWizard() {
             {steps[currentStep].id === 'insurance' && (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="provider">Proveedor del Seguro</Label>
+                  <Label htmlFor="provider_name">Proveedor del Seguro</Label>
                   <Input
-                    id="provider"
-                    value={insurance.provider}
-                    onChange={(e) => setInsurance({ ...insurance, provider: e.target.value })}
+                    id="provider_name"
+                    value={insurance.provider_name}
+                    onChange={(e) => setInsurance({ ...insurance, provider_name: e.target.value })}
                     placeholder="Isapre Banmédica, Fonasa, etc."
                   />
                 </div>
                 <div>
-                  <Label htmlFor="policyNumber">Número de Póliza</Label>
+                  <Label htmlFor="plan_name">Nombre del Plan</Label>
                   <Input
-                    id="policyNumber"
-                    value={insurance.policyNumber}
-                    onChange={(e) => setInsurance({ ...insurance, policyNumber: e.target.value })}
-                    placeholder="123456789"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="coverageType">Tipo de Cobertura</Label>
-                  <Input
-                    id="coverageType"
-                    value={insurance.coverageType}
-                    onChange={(e) => setInsurance({ ...insurance, coverageType: e.target.value })}
+                    id="plan_name"
+                    value={insurance.plan_name}
+                    onChange={(e) => setInsurance({ ...insurance, plan_name: e.target.value })}
                     placeholder="Plan familiar, Individual, etc."
                   />
                 </div>
                 <div>
-                  <Label htmlFor="startDate">Fecha de Inicio</Label>
+                  <Label htmlFor="member_id">ID Membresía</Label>
                   <Input
-                    id="startDate"
-                    type="date"
-                    value={insurance.startDate}
-                    onChange={(e) => setInsurance({ ...insurance, startDate: e.target.value })}
+                    id="member_id"
+                    value={insurance.member_id}
+                    onChange={(e) => setInsurance({ ...insurance, member_id: e.target.value })}
+                    placeholder="123456789"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="coverage_info">Cobertura</Label>
+                  <Input
+                    id="coverage_info"
+                    value={insurance.coverage_info}
+                    onChange={(e) => setInsurance({ ...insurance, coverage_info: e.target.value })}
+                    placeholder="Cobertura completa, parcial, etc."
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="primary_provider"
+                    checked={insurance.primary_provider}
+                    onChange={(e) => setInsurance({ ...insurance, primary_provider: e.target.checked })}
+                  />
+                  <Label htmlFor="primary_provider">¿Es tu seguro principal?</Label>
                 </div>
               </div>
             )}
@@ -683,44 +679,40 @@ export default function OnboardingWizard() {
             {steps[currentStep].id === 'banking' && (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="bankName">Banco</Label>
+                  <Label htmlFor="bank_name">Banco</Label>
                   <Input
-                    id="bankName"
-                    value={bankAccount.bankName}
-                    onChange={(e) => setBankAccount({ ...bankAccount, bankName: e.target.value })}
+                    id="bank_name"
+                    value={bankAccount.bank_name}
+                    onChange={(e) => setBankAccount({ ...bankAccount, bank_name: e.target.value })}
                     placeholder="Banco de Chile, BCI, etc."
                   />
                 </div>
                 <div>
-                  <Label htmlFor="accountHolderName">Titular de la Cuenta</Label>
+                  <Label htmlFor="rut">RUT</Label>
                   <Input
-                    id="accountHolderName"
-                    value={bankAccount.accountHolderName}
-                    onChange={(e) => setBankAccount({ ...bankAccount, accountHolderName: e.target.value })}
-                    placeholder="Tu nombre completo"
+                    id="rut"
+                    value={bankAccount.rut}
+                    onChange={(e) => setBankAccount({ ...bankAccount, rut: e.target.value })}
+                    placeholder="12.345.678-9"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="accountNumber">Número de Cuenta</Label>
+                  <Label htmlFor="account_number">Número de Cuenta</Label>
                   <Input
-                    id="accountNumber"
-                    value={bankAccount.accountNumber}
-                    onChange={(e) => setBankAccount({ ...bankAccount, accountNumber: e.target.value })}
+                    id="account_number"
+                    value={bankAccount.account_number}
+                    onChange={(e) => setBankAccount({ ...bankAccount, account_number: e.target.value })}
                     placeholder="1234567890"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="accountType">Tipo de Cuenta</Label>
-                  <Select value={bankAccount.accountType} onValueChange={(val) => setBankAccount({ ...bankAccount, accountType: val })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="checking">Cuenta Corriente</SelectItem>
-                      <SelectItem value="savings">Cuenta de Ahorro</SelectItem>
-                      <SelectItem value="other">Otra</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="account_type">Tipo de Cuenta</Label>
+                  <Input
+                    id="account_type"
+                    value={bankAccount.account_type}
+                    onChange={(e) => setBankAccount({ ...bankAccount, account_type: e.target.value })}
+                    placeholder="Corriente, Ahorro, etc."
+                  />
                 </div>
               </div>
             )}

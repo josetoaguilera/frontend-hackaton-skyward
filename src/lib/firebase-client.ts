@@ -7,13 +7,27 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth } from './firebase';
+import { 
+  transformUserFromApi, 
+  transformUserToApi, 
+  transformAddressFromApi, 
+  transformAddressToApi, 
+  transformEmergencyContactFromApi, 
+  transformEmergencyContactToApi, 
+  transformFromApi, 
+  transformToApi 
+} from './api-transforms';
 import type { 
+  ApiResponse,
   User, 
+  UserApiResponse,
   EmergencyRequest,
   Address,
+  AddressApiResponse,
   CreateAddressData,
   UpdateAddressData,
   EmergencyContactData,
+  EmergencyContactApiResponse,
   CreateEmergencyContactData,
   UpdateEmergencyContactData,
   EmergencyEvent,
@@ -100,8 +114,7 @@ class FirebaseAuthClient {
   async register(userData: {
     email: string;
     password: string;
-    firstName: string;
-    lastName: string;
+    fullName: string;
     phone: string;
     address?: string;
     bloodType?: string;
@@ -126,7 +139,7 @@ class FirebaseAuthClient {
 
       // Update display name
       await updateProfile(user, {
-        displayName: `${userData.firstName} ${userData.lastName}`
+        displayName: userData.fullName
       });
 
       // Get Firebase token
@@ -142,14 +155,13 @@ class FirebaseAuthClient {
         body: JSON.stringify({
           uid: user.uid,
           email: userData.email,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
+          full_name: userData.fullName,
           phone: userData.phone,
           address: userData.address || '',
-          bloodType: userData.bloodType || '',
+          blood_type: userData.bloodType || '',
           allergies: userData.allergies || '',
-          medicalConditions: userData.medicalConditions || '',
-          emergencyContact: userData.emergencyContact || null,
+          medical_conditions: userData.medicalConditions || '',
+          emergency_contact: userData.emergencyContact || null,
         })
       });
 
@@ -182,7 +194,16 @@ class FirebaseAuthClient {
   async getProfile(): Promise<User> {
     try {
       const response = await this.fetchWithAuth('/v1/users/me');
-      return await response.json();
+      const apiResponse: ApiResponse<UserApiResponse> = await response.json();
+      console.log("\n\nAPI USER DATA", apiResponse);
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      const data = transformUserFromApi(apiResponse.data);
+      console.log("DATA", data)
+      return data
     } catch (error: any) {
       console.error('Get profile error:', error);
       throw new Error(error.message || 'Error al obtener el perfil');
@@ -257,7 +278,13 @@ class FirebaseAuthClient {
   async getAddresses(): Promise<Address[]> {
     try {
       const response = await this.fetchWithAuth('/v1/addresses');
-      return await response.json();
+      const apiResponse: ApiResponse<AddressApiResponse[]> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data.map(transformAddressFromApi);
     } catch (error: any) {
       console.error('Get addresses error:', error);
       throw new Error(error.message || 'Error al obtener las direcciones');
@@ -267,11 +294,18 @@ class FirebaseAuthClient {
   // Create a new address
   async createAddress(addressData: CreateAddressData): Promise<Address> {
     try {
+      const apiAddressData = transformAddressToApi(addressData);
       const response = await this.fetchWithAuth('/v1/addresses', {
         method: 'POST',
-        body: JSON.stringify(addressData)
+        body: JSON.stringify(apiAddressData)
       });
-      return await response.json();
+      const apiResponse: ApiResponse<AddressApiResponse> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return transformAddressFromApi(apiResponse.data);
     } catch (error: any) {
       console.error('Create address error:', error);
       throw new Error(error.message || 'Error al crear la dirección');
@@ -385,7 +419,13 @@ class FirebaseAuthClient {
   async getEmergencyContacts(): Promise<EmergencyContactData[]> {
     try {
       const response = await this.fetchWithAuth('/v1/emergency-contacts');
-      return await response.json();
+      const apiResponse: ApiResponse<EmergencyContactApiResponse[]> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data.map(transformEmergencyContactFromApi);
     } catch (error: any) {
       console.error('Get emergency contacts error:', error);
       throw new Error(error.message || 'Error al obtener los contactos de emergencia');
@@ -395,11 +435,18 @@ class FirebaseAuthClient {
   // Create a new emergency contact
   async createEmergencyContact(contactData: CreateEmergencyContactData): Promise<EmergencyContactData> {
     try {
+      const apiContactData = transformEmergencyContactToApi(contactData);
       const response = await this.fetchWithAuth('/v1/emergency-contacts', {
         method: 'POST',
-        body: JSON.stringify(contactData)
+        body: JSON.stringify(apiContactData)
       });
-      return await response.json();
+      const apiResponse: ApiResponse<EmergencyContactApiResponse> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return transformEmergencyContactFromApi(apiResponse.data);
     } catch (error: any) {
       console.error('Create emergency contact error:', error);
       throw new Error(error.message || 'Error al crear el contacto de emergencia');
@@ -472,11 +519,18 @@ class FirebaseAuthClient {
   // Update current user profile
   async updateProfile(updates: Partial<User>): Promise<User> {
     try {
+      const apiUpdates = transformUserToApi(updates);
       const response = await this.fetchWithAuth('/v1/users/me', {
         method: 'PUT',
-        body: JSON.stringify(updates)
+        body: JSON.stringify(apiUpdates)
       });
-      return await response.json();
+      const apiResponse: ApiResponse<UserApiResponse> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return transformUserFromApi(apiResponse.data);
     } catch (error: any) {
       console.error('Update profile error:', error);
       throw new Error(error.message || 'Error al actualizar el perfil');
@@ -534,7 +588,13 @@ class FirebaseAuthClient {
   async getBankAccounts(): Promise<BankAccount[]> {
     try {
       const response = await this.fetchWithAuth('/v1/bank-accounts');
-      return await response.json();
+      const apiResponse: ApiResponse<BankAccount[]> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data;
     } catch (error: any) {
       console.error('Get bank accounts error:', error);
       throw new Error(error.message || 'Error al obtener las cuentas bancarias');
@@ -548,7 +608,13 @@ class FirebaseAuthClient {
         method: 'POST',
         body: JSON.stringify(accountData)
       });
-      return await response.json();
+      const apiResponse: ApiResponse<BankAccount> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data;
     } catch (error: any) {
       console.error('Create bank account error:', error);
       throw new Error(error.message || 'Error al crear la cuenta bancaria');
@@ -598,7 +664,13 @@ class FirebaseAuthClient {
   async getHealthInsurances(): Promise<HealthInsurance[]> {
     try {
       const response = await this.fetchWithAuth('/v1/health-insurance');
-      return await response.json();
+      const apiResponse: ApiResponse<HealthInsurance[]> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data;
     } catch (error: any) {
       console.error('Get health insurances error:', error);
       throw new Error(error.message || 'Error al obtener los seguros de salud');
@@ -612,7 +684,13 @@ class FirebaseAuthClient {
         method: 'POST',
         body: JSON.stringify(insuranceData)
       });
-      return await response.json();
+      const apiResponse: ApiResponse<HealthInsurance> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data;
     } catch (error: any) {
       console.error('Create health insurance error:', error);
       throw new Error(error.message || 'Error al crear el seguro de salud');
@@ -662,7 +740,13 @@ class FirebaseAuthClient {
   async getMedicalInfo(): Promise<MedicalInfoData> {
     try {
       const response = await this.fetchWithAuth('/v1/medical-info');
-      return await response.json();
+      const apiResponse: ApiResponse<MedicalInfoData> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data;
     } catch (error: any) {
       console.error('Get medical info error:', error);
       throw new Error(error.message || 'Error al obtener la información médica');
@@ -716,7 +800,13 @@ class FirebaseAuthClient {
         method: 'PATCH',
         body: JSON.stringify(medicalData)
       });
-      return await response.json();
+      const apiResponse: ApiResponse<MedicalInfoData> = await response.json();
+      
+      if (!apiResponse.success) {
+        throw new Error('API request was not successful');
+      }
+      
+      return apiResponse.data;
     } catch (error: any) {
       console.error('Upsert medical info error:', error);
       throw new Error(error.message || 'Error al guardar la información médica');

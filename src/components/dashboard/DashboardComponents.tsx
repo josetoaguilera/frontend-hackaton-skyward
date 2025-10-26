@@ -52,16 +52,20 @@ export function CollapsibleSection({ title, icon, badge, children, defaultExpand
 
 interface InfoItemProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
   isPrimary?: boolean;
 }
 
 export function InfoItem({ label, value, isPrimary }: InfoItemProps) {
   return (
-    <div className="flex justify-between items-start py-2 border-b border-gray-100 last:border-0">
+    <div className="flex justify-between items-start w-full py-2 border-b border-gray-100 last:border-0">
       <span className="text-sm text-gray-600 font-medium">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-900">{value}</span>
+        {typeof value === 'string' || typeof value === 'number' ? (
+          <span className="text-sm text-gray-900">{value}</span>
+        ) : (
+          value
+        )}
         {isPrimary && <Badge variant="default" className="text-xs">Principal</Badge>}
       </div>
     </div>
