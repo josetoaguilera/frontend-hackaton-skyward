@@ -67,6 +67,7 @@ export interface EmergencyRequest {
     phone: string;
     alternativePhone?: string;
   };
+  eventType: string;
   medicalInfo?: {
     allergies?: string[];
     medications?: string[];
@@ -249,6 +250,8 @@ export interface EmergencyEvent {
       relationship: string;
     };
   };
+  audioRecordingUrl?: string;
+  eventType: string;
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
