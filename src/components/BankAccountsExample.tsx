@@ -14,13 +14,14 @@ export default function BankAccountsExample() {
   const { accounts, isLoading, error, createAccount, updateAccount, deleteAccount } = useBankAccounts();
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
-    bankName: '',
-    accountNumber: '',
-    accountType: 'checking' as 'checking' | 'savings' | 'other',
-    accountHolderName: '',
-    routingNumber: '',
-    swiftCode: '',
-    isPrimary: false,
+    bank_name: '',
+    account_number: '',
+    account_type: 'checking' as 'checking' | 'savings' | 'other',
+    account_holder_name: '',
+    routing_number: '',
+    rut: '',
+    swift_code: '',
+    is_primary: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,13 +29,14 @@ export default function BankAccountsExample() {
     try {
       await createAccount(formData);
       setFormData({
-        bankName: '',
-        accountNumber: '',
-        accountType: 'checking',
-        accountHolderName: '',
-        routingNumber: '',
-        swiftCode: '',
-        isPrimary: false,
+        bank_name: '',
+        account_number: '',
+        account_type: 'checking',
+        account_holder_name: '',
+        routing_number: '',
+        swift_code: '',
+        rut: '',
+        is_primary: false,
       });
       setIsCreating(false);
     } catch (err) {
@@ -97,8 +99,8 @@ export default function BankAccountsExample() {
                   <Label htmlFor="bankName">Banco *</Label>
                   <Input
                     id="bankName"
-                    value={formData.bankName}
-                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                    value={formData.bank_name}
+                    onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
                     placeholder="Ej: Banco de Chile"
                     required
                   />
@@ -107,8 +109,8 @@ export default function BankAccountsExample() {
                   <Label htmlFor="accountHolderName">Titular de la Cuenta *</Label>
                   <Input
                     id="accountHolderName"
-                    value={formData.accountHolderName}
-                    onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
+                    value={formData.account_holder_name}
+                    onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
                     required
                   />
                 </div>
@@ -116,17 +118,17 @@ export default function BankAccountsExample() {
                   <Label htmlFor="accountNumber">Número de Cuenta *</Label>
                   <Input
                     id="accountNumber"
-                    value={formData.accountNumber}
-                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                    value={formData.account_number}
+                    onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
                     required
                   />
                 </div>
                 <div>
                   <Label htmlFor="accountType">Tipo de Cuenta *</Label>
                   <Select
-                    value={formData.accountType}
+                    value={formData.account_type}
                     onValueChange={(value: 'checking' | 'savings' | 'other') =>
-                      setFormData({ ...formData, accountType: value })
+                      setFormData({ ...formData, account_type: value })
                     }
                   >
                     <SelectTrigger>
@@ -143,16 +145,16 @@ export default function BankAccountsExample() {
                   <Label htmlFor="routingNumber">Código de Ruta</Label>
                   <Input
                     id="routingNumber"
-                    value={formData.routingNumber}
-                    onChange={(e) => setFormData({ ...formData, routingNumber: e.target.value })}
+                    value={formData.routing_number}
+                    onChange={(e) => setFormData({ ...formData, routing_number: e.target.value })}
                   />
                 </div>
                 <div>
                   <Label htmlFor="swiftCode">Código SWIFT</Label>
                   <Input
                     id="swiftCode"
-                    value={formData.swiftCode}
-                    onChange={(e) => setFormData({ ...formData, swiftCode: e.target.value })}
+                    value={formData.swift_code}
+                    onChange={(e) => setFormData({ ...formData, swift_code: e.target.value })}
                   />
                 </div>
               </div>
@@ -160,8 +162,8 @@ export default function BankAccountsExample() {
                 <input
                   type="checkbox"
                   id="isPrimary"
-                  checked={formData.isPrimary}
-                  onChange={(e) => setFormData({ ...formData, isPrimary: e.target.checked })}
+                  checked={formData.is_primary}
+                  onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
                   className="rounded border-gray-300"
                 />
                 <Label htmlFor="isPrimary" className="cursor-pointer">

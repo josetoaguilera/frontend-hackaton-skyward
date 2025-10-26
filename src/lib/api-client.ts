@@ -86,11 +86,9 @@ class ApiClient {
 
   async logout(): Promise<void> {
     try {
-      await this.request(API_ENDPOINTS.logout, {
-        method: 'POST',
-      });
-    } finally {
       this.clearToken();
+    } finally {
+      return Promise.resolve();
     }
   }
 
