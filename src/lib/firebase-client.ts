@@ -116,58 +116,26 @@ class FirebaseAuthClient {
     password: string;
     fullName: string;
     phone: string;
-    address?: string;
-    bloodType?: string;
-    allergies?: string;
-    medicalConditions?: string;
-    emergencyContact?: {
-      name: string;
-      phone: string;
-      relationship: string;
-    };
+    rut?: string;
   }): Promise<void> {
     try {
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        userData.email,
-        userData.password
-      );
-
-      const user = userCredential.user;
-      this.currentUser = user;
-
-      // Update display name
-      await updateProfile(user, {
-        displayName: userData.fullName
-      });
-
-      // Get Firebase token
-      const token = await user.getIdToken();
-
       // Send user data to backend
       const response = await fetch(`${API_BASE_URL}/v1/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          uid: user.uid,
           email: userData.email,
           full_name: userData.fullName,
-          phone: userData.phone,
-          address: userData.address || '',
-          blood_type: userData.bloodType || '',
-          allergies: userData.allergies || '',
-          medical_conditions: userData.medicalConditions || '',
-          emergency_contact: userData.emergencyContact || null,
+          phone_number: userData.phone,
+          password: userData.password,
+          rut: userData.rut
         })
       });
 
       if (!response.ok) {
         // If backend fails, delete Firebase user to maintain consistency
-        await user.delete();
         throw new Error('Error al crear el perfil en el servidor');
       }
     } catch (error: any) {

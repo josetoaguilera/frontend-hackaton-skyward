@@ -18,6 +18,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     phone: '',
+    rut: '',
     acceptTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -116,6 +117,23 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   className="pl-9"
                   placeholder="Juan Pérez"
+                />
+              </div>
+            </div>
+
+            {/* RUT */}
+            <div className="space-y-2">
+              <Label htmlFor="rut">RUT</Label>
+              <div className="relative">
+                <Input
+                  id="rut"
+                  name="rut"
+                  type="text"
+                  required
+                  value={formData.rut || ''}
+                  onChange={handleChange}
+                  className="pl-4"
+                  placeholder="12.345.678-9"
                 />
               </div>
             </div>
