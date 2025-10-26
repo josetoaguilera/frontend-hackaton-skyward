@@ -160,6 +160,7 @@ export async function testEmergencyEventsCRUD() {
       longitude: -70.6693,
       address: 'Santiago, Chile'
     },
+    eventType: 'medical',
     contactInfo: {
       phone: '+56912345678',
       alternativePhone: '+56987654321'
