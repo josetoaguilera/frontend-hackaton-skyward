@@ -7,10 +7,31 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth } from './firebase';
-import type { User, EmergencyRequest } from '@/types';
+import type { 
+  User, 
+  EmergencyRequest,
+  Address,
+  CreateAddressData,
+  UpdateAddressData,
+  EmergencyContactData,
+  CreateEmergencyContactData,
+  UpdateEmergencyContactData,
+  EmergencyEvent,
+  CreateEmergencyEventData,
+  UpdateEmergencyEventData,
+  BankAccount,
+  CreateBankAccountData,
+  UpdateBankAccountData,
+  HealthInsurance,
+  CreateHealthInsuranceData,
+  UpdateHealthInsuranceData,
+  MedicalInfoData,
+  CreateMedicalInfoData,
+  UpdateMedicalInfoData
+} from '@/types';
 
 // Backend API URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 class FirebaseAuthClient {
   private currentUser: FirebaseUser | null = null;
@@ -227,6 +248,478 @@ class FirebaseAuthClient {
     } catch (error: any) {
       console.error('Delete emergency request error:', error);
       throw error;
+    }
+  }
+
+  // ==================== ADDRESSES ====================
+  
+  // Get all addresses for the authenticated user
+  async getAddresses(): Promise<Address[]> {
+    try {
+      const response = await this.fetchWithAuth('/v1/addresses');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get addresses error:', error);
+      throw new Error(error.message || 'Error al obtener las direcciones');
+    }
+  }
+
+  // Create a new address
+  async createAddress(addressData: CreateAddressData): Promise<Address> {
+    try {
+      const response = await this.fetchWithAuth('/v1/addresses', {
+        method: 'POST',
+        body: JSON.stringify(addressData)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Create address error:', error);
+      throw new Error(error.message || 'Error al crear la dirección');
+    }
+  }
+
+  // Get a specific address by ID
+  async getAddress(id: string): Promise<Address> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/addresses/${id}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get address error:', error);
+      throw error;
+    }
+  }
+
+  // Update an address
+  async updateAddress(id: string, updates: UpdateAddressData): Promise<Address> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/addresses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Update address error:', error);
+      throw error;
+    }
+  }
+
+  // Delete an address
+  async deleteAddress(id: string): Promise<void> {
+    try {
+      await this.fetchWithAuth(`/v1/addresses/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (error: any) {
+      console.error('Delete address error:', error);
+      throw error;
+    }
+  }
+
+  // Set an address as the primary address
+  async setPrimaryAddress(id: string): Promise<Address> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/addresses/${id}/set-primary`, {
+        method: 'PATCH'
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Set primary address error:', error);
+      throw error;
+    }
+  }
+
+  // ==================== AUTHENTICATION ====================
+
+  // Check if email is available for registration
+  async checkEmail(email: string): Promise<{ available: boolean }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/check-email/${email}`);
+      if (!response.ok) {
+        throw new Error('Error al verificar el correo');
+      }
+      return await response.json();
+    } catch (error: any) {
+      console.error('Check email error:', error);
+      throw new Error(error.message || 'Error al verificar el correo');
+    }
+  }
+
+  // Sign in with Firebase ID token
+  async signInWithToken(idToken: string): Promise<User> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/signin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al iniciar sesión');
+      }
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Sign in with token error:', error);
+      throw new Error(error.message || 'Error al iniciar sesión');
+    }
+  }
+
+  // Generate email verification link
+  async verifyEmail(): Promise<{ message: string }> {
+    try {
+      const response = await this.fetchWithAuth('/v1/auth/verify-email', {
+        method: 'POST'
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Verify email error:', error);
+      throw new Error(error.message || 'Error al enviar el correo de verificación');
+    }
+  }
+
+  // ==================== EMERGENCY CONTACTS ====================
+
+  // Get all emergency contacts for the authenticated user
+  async getEmergencyContacts(): Promise<EmergencyContactData[]> {
+    try {
+      const response = await this.fetchWithAuth('/v1/emergency-contacts');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get emergency contacts error:', error);
+      throw new Error(error.message || 'Error al obtener los contactos de emergencia');
+    }
+  }
+
+  // Create a new emergency contact
+  async createEmergencyContact(contactData: CreateEmergencyContactData): Promise<EmergencyContactData> {
+    try {
+      const response = await this.fetchWithAuth('/v1/emergency-contacts', {
+        method: 'POST',
+        body: JSON.stringify(contactData)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Create emergency contact error:', error);
+      throw new Error(error.message || 'Error al crear el contacto de emergencia');
+    }
+  }
+
+  // Get a specific emergency contact by ID
+  async getEmergencyContact(id: string): Promise<EmergencyContactData> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/emergency-contacts/${id}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get emergency contact error:', error);
+      throw error;
+    }
+  }
+
+  // Update an emergency contact
+  async updateEmergencyContact(id: string, updates: UpdateEmergencyContactData): Promise<EmergencyContactData> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/emergency-contacts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Update emergency contact error:', error);
+      throw error;
+    }
+  }
+
+  // Delete an emergency contact
+  async deleteEmergencyContact(id: string): Promise<void> {
+    try {
+      await this.fetchWithAuth(`/v1/emergency-contacts/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (error: any) {
+      console.error('Delete emergency contact error:', error);
+      throw error;
+    }
+  }
+
+  // ==================== EMERGENCY EVENTS (ENHANCED) ====================
+
+  // Get all emergency events (Admin only)
+  async getAllEmergencyEvents(): Promise<EmergencyEvent[]> {
+    try {
+      const response = await this.fetchWithAuth('/v1/emergency-events/all');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get all emergency events error:', error);
+      throw new Error(error.message || 'Error al obtener todos los eventos de emergencia');
+    }
+  }
+
+  // ==================== USERS ====================
+
+  // Get all users (Admin only)
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const response = await this.fetchWithAuth('/v1/users');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get all users error:', error);
+      throw new Error(error.message || 'Error al obtener los usuarios');
+    }
+  }
+
+  // Update current user profile
+  async updateProfile(updates: Partial<User>): Promise<User> {
+    try {
+      const response = await this.fetchWithAuth('/v1/users/me', {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      throw new Error(error.message || 'Error al actualizar el perfil');
+    }
+  }
+
+  // Delete current user account
+  async deleteAccount(): Promise<void> {
+    try {
+      await this.fetchWithAuth('/v1/users/me', {
+        method: 'DELETE'
+      });
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      throw new Error(error.message || 'Error al eliminar la cuenta');
+    }
+  }
+
+  // Get user by ID
+  async getUserById(id: string): Promise<User> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/users/${id}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get user by ID error:', error);
+      throw error;
+    }
+  }
+
+  // Get user by RUT
+  async getUserByRut(rut: string): Promise<User> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/users/rut/${rut}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get user by RUT error:', error);
+      throw error;
+    }
+  }
+
+  // Get user by phone number
+  async getUserByPhone(phoneNumber: string): Promise<User> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/users/phone/${phoneNumber}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get user by phone error:', error);
+      throw error;
+    }
+  }
+
+  // ==================== BANK ACCOUNTS ====================
+
+  // Get all bank accounts for the authenticated user
+  async getBankAccounts(): Promise<BankAccount[]> {
+    try {
+      const response = await this.fetchWithAuth('/v1/bank-accounts');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get bank accounts error:', error);
+      throw new Error(error.message || 'Error al obtener las cuentas bancarias');
+    }
+  }
+
+  // Create a new bank account
+  async createBankAccount(accountData: CreateBankAccountData): Promise<BankAccount> {
+    try {
+      const response = await this.fetchWithAuth('/v1/bank-accounts', {
+        method: 'POST',
+        body: JSON.stringify(accountData)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Create bank account error:', error);
+      throw new Error(error.message || 'Error al crear la cuenta bancaria');
+    }
+  }
+
+  // Get a specific bank account by ID
+  async getBankAccount(id: string): Promise<BankAccount> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/bank-accounts/${id}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get bank account error:', error);
+      throw error;
+    }
+  }
+
+  // Update a bank account
+  async updateBankAccount(id: string, updates: UpdateBankAccountData): Promise<BankAccount> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/bank-accounts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Update bank account error:', error);
+      throw error;
+    }
+  }
+
+  // Delete a bank account
+  async deleteBankAccount(id: string): Promise<void> {
+    try {
+      await this.fetchWithAuth(`/v1/bank-accounts/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (error: any) {
+      console.error('Delete bank account error:', error);
+      throw error;
+    }
+  }
+
+  // ==================== HEALTH INSURANCE ====================
+
+  // Get all health insurance records for the authenticated user
+  async getHealthInsurances(): Promise<HealthInsurance[]> {
+    try {
+      const response = await this.fetchWithAuth('/v1/health-insurance');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get health insurances error:', error);
+      throw new Error(error.message || 'Error al obtener los seguros de salud');
+    }
+  }
+
+  // Create a new health insurance record
+  async createHealthInsurance(insuranceData: CreateHealthInsuranceData): Promise<HealthInsurance> {
+    try {
+      const response = await this.fetchWithAuth('/v1/health-insurance', {
+        method: 'POST',
+        body: JSON.stringify(insuranceData)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Create health insurance error:', error);
+      throw new Error(error.message || 'Error al crear el seguro de salud');
+    }
+  }
+
+  // Get a specific health insurance record by ID
+  async getHealthInsurance(id: string): Promise<HealthInsurance> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/health-insurance/${id}`);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get health insurance error:', error);
+      throw error;
+    }
+  }
+
+  // Update a health insurance record
+  async updateHealthInsurance(id: string, updates: UpdateHealthInsuranceData): Promise<HealthInsurance> {
+    try {
+      const response = await this.fetchWithAuth(`/v1/health-insurance/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Update health insurance error:', error);
+      throw error;
+    }
+  }
+
+  // Delete a health insurance record
+  async deleteHealthInsurance(id: string): Promise<void> {
+    try {
+      await this.fetchWithAuth(`/v1/health-insurance/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (error: any) {
+      console.error('Delete health insurance error:', error);
+      throw error;
+    }
+  }
+
+  // ==================== MEDICAL INFO ====================
+
+  // Get medical info for the authenticated user
+  async getMedicalInfo(): Promise<MedicalInfoData> {
+    try {
+      const response = await this.fetchWithAuth('/v1/medical-info');
+      return await response.json();
+    } catch (error: any) {
+      console.error('Get medical info error:', error);
+      throw new Error(error.message || 'Error al obtener la información médica');
+    }
+  }
+
+  // Create medical info for the authenticated user
+  async createMedicalInfo(medicalData: CreateMedicalInfoData): Promise<MedicalInfoData> {
+    try {
+      const response = await this.fetchWithAuth('/v1/medical-info', {
+        method: 'POST',
+        body: JSON.stringify(medicalData)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Create medical info error:', error);
+      throw new Error(error.message || 'Error al crear la información médica');
+    }
+  }
+
+  // Update medical info for the authenticated user
+  async updateMedicalInfo(updates: UpdateMedicalInfoData): Promise<MedicalInfoData> {
+    try {
+      const response = await this.fetchWithAuth('/v1/medical-info', {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Update medical info error:', error);
+      throw new Error(error.message || 'Error al actualizar la información médica');
+    }
+  }
+
+  // Delete medical info for the authenticated user
+  async deleteMedicalInfo(): Promise<void> {
+    try {
+      await this.fetchWithAuth('/v1/medical-info', {
+        method: 'DELETE'
+      });
+    } catch (error: any) {
+      console.error('Delete medical info error:', error);
+      throw new Error(error.message || 'Error al eliminar la información médica');
+    }
+  }
+
+  // Create or update medical info (upsert operation)
+  async upsertMedicalInfo(medicalData: CreateMedicalInfoData): Promise<MedicalInfoData> {
+    try {
+      const response = await this.fetchWithAuth('/v1/medical-info', {
+        method: 'PATCH',
+        body: JSON.stringify(medicalData)
+      });
+      return await response.json();
+    } catch (error: any) {
+      console.error('Upsert medical info error:', error);
+      throw new Error(error.message || 'Error al guardar la información médica');
     }
   }
 

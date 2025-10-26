@@ -1,361 +1,378 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthProvider';
-import { 
-  Phone, 
-  User, 
-  Bell, 
-  LogOut, 
-  AlertTriangle,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Plus,
-  Search,
-  Filter
-} from 'lucide-react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { apiClient } from '@/lib/firebase-client';
-import type { User as UserType, EmergencyRequest } from '@/types';
-import { EMERGENCY_LABELS, REQUEST_STATUS } from '@/lib/api-config';
+import type { 
+  Address, 
+  EmergencyContactData, 
+  EmergencyEvent,
+  BankAccount,
+  HealthInsurance,
+  MedicalInfoData,
+  User as UserType
+} from '@/types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { 
+  CollapsibleSection, 
+  DataCard, 
+  InfoItem,
+  EmptySection 
+} from '@/components/dashboard/DashboardComponents';
+import { MapPin, Phone, Heart, CreditCard, Shield, User } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user: firebaseUser, loading: authLoading } = useAuth();
-  const [user, setUser] = useState<UserType | null>(null);
-  const [emergencyRequests, setEmergencyRequests] = useState<EmergencyRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<UserType | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContactData[]>([]);
+  const [emergencyEvents, setEmergencyEvents] = useState<EmergencyEvent[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [healthInsurances, setHealthInsurances] = useState<HealthInsurance[]>([]);
+  const [medicalInfo, setMedicalInfo] = useState<MedicalInfoData | null>(null);
 
   useEffect(() => {
-    // Esperar a que Firebase complete la autenticación
-    if (!authLoading && firebaseUser) {
-      loadData();
-    } else if (!authLoading && !firebaseUser) {
-      // Si no hay usuario después de cargar, no hacer nada
-      // ProtectedRoute se encargará de redirigir
-      setIsLoading(false);
-    }
-  }, [authLoading, firebaseUser]);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        router.push('/login');
+        return;
+      }
 
-  const loadData = async () => {
+      await loadAllData();
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const loadAllData = async () => {
     try {
-      const [userResponse, requestsResponse] = await Promise.all([
-        apiClient.getProfile(),
-        apiClient.getEmergencyRequests()
+      const [
+        userProfile,
+        addressesData,
+        contactsData,
+        eventsData,
+        accountsData,
+        insurancesData,
+        medicalData
+      ] = await Promise.all([
+        apiClient.getProfile().catch(() => null),
+        apiClient.getAddresses().catch(() => []),
+        apiClient.getEmergencyContacts().catch(() => []),
+        apiClient.getEmergencyRequests().catch(() => []),
+        apiClient.getBankAccounts().catch(() => []),
+        apiClient.getHealthInsurances().catch(() => []),
+        apiClient.getMedicalInfo().catch(() => null)
       ]);
 
-      setUser(userResponse);
-      setEmergencyRequests(Array.isArray(requestsResponse) ? requestsResponse : []);
+      setUser(userProfile);
+      setAddresses(addressesData);
+      setEmergencyContacts(contactsData);
+      setEmergencyEvents(eventsData);
+      setBankAccounts(accountsData);
+      setHealthInsurances(insurancesData);
+      setMedicalInfo(medicalData);
     } catch (error) {
       console.error('Error loading data:', error);
-      setEmergencyRequests([]); // Asegurar que sea un array vacío en caso de error
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await apiClient.logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-      // Forzar logout local incluso si falla la API
-      apiClient.clearToken();
-      router.push('/login');
-    }
+  const hasCompletedOnboarding = () => {
+    return addresses.length > 0 || emergencyContacts.length > 0;
   };
 
-  // Copy Firebase token for testing in Swagger
-  const copyTokenToClipboard = async () => {
-    try {
-      const token = await apiClient.getIdToken();
-      if (token) {
-        await navigator.clipboard.writeText(token);
-        alert('✅ Token copiado al clipboard!\n\nPega este token en Swagger:\n1. Click en "Authorize"\n2. Escribe: Bearer ' + token.substring(0, 20) + '...\n3. Click "Authorize"');
-      } else {
-        alert('❌ No hay usuario autenticado');
-      }
-    } catch (error) {
-      console.error('Error copying token:', error);
-      alert('❌ Error al copiar el token');
-    }
+  const maskAccountNumber = (number: string) => {
+    if (!number || number.length < 4) return number;
+    return `****${number.slice(-4)}`;
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      [REQUEST_STATUS.PENDING]: { variant: 'secondary' as const, icon: Clock, label: 'Pendiente' },
-      [REQUEST_STATUS.IN_PROGRESS]: { variant: 'default' as const, icon: AlertTriangle, label: 'En Progreso' },
-      [REQUEST_STATUS.RESOLVED]: { variant: 'secondary' as const, icon: CheckCircle, label: 'Resuelto' },
-      [REQUEST_STATUS.CANCELLED]: { variant: 'destructive' as const, icon: XCircle, label: 'Cancelado' }
-    };
-
-    const badge = badges[status as keyof typeof badges] || badges[REQUEST_STATUS.PENDING];
-    const Icon = badge.icon;
-
+  if (loading) {
     return (
-      <Badge variant={badge.variant} className="flex items-center gap-1">
-        <Icon className="w-3 h-3" />
-        {badge.label}
-      </Badge>
-    );
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    const priorities = {
-      low: { variant: 'outline' as const, label: 'Baja' },
-      medium: { variant: 'secondary' as const, label: 'Media' },
-      high: { variant: 'default' as const, label: 'Alta' },
-      critical: { variant: 'destructive' as const, label: 'Crítica' }
-    };
-
-    const badge = priorities[priority as keyof typeof priorities] || priorities.low;
-
-    return (
-      <Badge variant={badge.variant}>
-        {badge.label}
-      </Badge>
-    );
-  };
-
-  const filteredRequests = emergencyRequests.filter(request => {
-    const matchesSearch = request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.type.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const stats = {
-    total: emergencyRequests.length,
-    pending: emergencyRequests.filter(r => r.status === REQUEST_STATUS.PENDING).length,
-    inProgress: emergencyRequests.filter(r => r.status === REQUEST_STATUS.IN_PROGRESS).length,
-    resolved: emergencyRequests.filter(r => r.status === REQUEST_STATUS.RESOLVED).length
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
-          <p className="mt-4 text-gray-600">Cargando datos...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando tu información...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="bg-red-100 p-2 rounded-lg">
-                <Phone className="h-6 w-6 text-red-600" />
-              </div>
-              <div className="ml-3">
-                <h1 className="text-xl font-semibold text-gray-900">
-                  Sistema de Emergencias 911
-                </h1>
-                <p className="text-sm text-gray-500">Panel de Control</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              {/* Dev Tool: Copy Token for Swagger */}
-              <Button 
-                onClick={copyTokenToClipboard}
-                variant="outline" 
-                size="sm"
-                className="text-xs"
-                title="Copiar token para Swagger"
-              >
-                🔑 Token
-              </Button>
-
-              <Button variant="ghost" size="icon">
-                <Bell className="h-4 w-4" />
-              </Button>
-              
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                </div>
-                <div className="bg-red-100 p-2 rounded-full">
-                  <User className="h-5 w-5 text-red-600" />
-                </div>
-              </div>
-
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-red-600"
-                title="Cerrar sesión"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Solicitudes</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">En Progreso</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.inProgress}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Resueltas</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.resolved}</div>
-            </CardContent>
-          </Card>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Bienvenido, {user?.firstName || 'Usuario'} 👋
+          </h1>
+          <p className="text-gray-600">
+            Gestiona tu información personal y de emergencia
+          </p>
         </div>
 
-        {/* Emergency Requests Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-              <div>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Solicitudes de Emergencia
-                </CardTitle>
-                <CardDescription>
-                  Gestiona todas las solicitudes del sistema
-                </CardDescription>
+        {/* Onboarding Prompt */}
+        {!hasCompletedOnboarding() && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <Button
-                onClick={() => router.push('/emergency-request/new')}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Nueva Solicitud
-              </Button>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar solicitudes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filtrar por estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value={REQUEST_STATUS.PENDING}>Pendiente</SelectItem>
-                  <SelectItem value={REQUEST_STATUS.IN_PROGRESS}>En Progreso</SelectItem>
-                  <SelectItem value={REQUEST_STATUS.RESOLVED}>Resuelto</SelectItem>
-                  <SelectItem value={REQUEST_STATUS.CANCELLED}>Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            <div className="space-y-4">
-              {filteredRequests.length === 0 ? (
-                <div className="py-12 text-center">
-                  <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-2 text-sm font-medium">No hay solicitudes</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {searchTerm || statusFilter !== 'all' ? 'No se encontraron solicitudes con los filtros aplicados.' : 'Comienza creando tu primera solicitud de emergencia.'}
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Completa tu perfil
+                </h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>
+                    Parece que aún no has completado tu información. Te recomendamos completar el proceso de onboarding para aprovechar todas las funciones.
                   </p>
                 </div>
-              ) : (
-                filteredRequests.map((request) => (
-                  <Card key={request.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-medium">
-                              {EMERGENCY_LABELS[request.type as keyof typeof EMERGENCY_LABELS] || request.type}
-                            </h3>
-                            {getStatusBadge(request.status)}
-                            {getPriorityBadge(request.priority)}
-                          </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                            {request.description}
-                          </p>
-                          <div className="flex items-center text-xs text-muted-foreground gap-4">
-                            <span>Creado: {new Date(request.createdAt).toLocaleString('es-ES')}</span>
-                            {request.contactInfo.phone && (
-                              <span>Tel: {request.contactInfo.phone}</span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <Button
-                          onClick={() => router.push(`/emergency-request/${request.id}`)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Ver detalles
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+                <div className="mt-4">
+                  <Button
+                    onClick={() => router.push('/onboarding')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Completar Onboarding
+                  </Button>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </main>
+          </div>
+        )}
+
+        {/* Dashboard Grid */}
+        <div className="space-y-6">
+          {/* Personal Information */}
+          <CollapsibleSection 
+            title="Información Personal" 
+            icon={<User className="w-5 h-5 text-blue-600" />}
+            defaultExpanded={true}
+          >
+            {user ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InfoItem label="Nombre" value={`${user.firstName} ${user.lastName}`} />
+                <InfoItem label="Email" value={user.email} />
+                <InfoItem label="Teléfono" value={user.phone || user.phoneNumber || 'No especificado'} />
+                <InfoItem label="RUT" value={user.rut || 'No especificado'} />
+                <InfoItem label="Rol" value={user.role} />
+                <InfoItem 
+                  label="Estado" 
+                  value={user.isActive ? 'Activo' : 'Inactivo'}
+                />
+              </div>
+            ) : (
+              <EmptySection
+                message="No se pudo cargar la información personal"
+                onAdd={loadAllData}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Addresses */}
+          <CollapsibleSection 
+            title="Direcciones" 
+            icon={<MapPin className="w-5 h-5 text-blue-600" />}
+            badge={`${addresses.length} ${addresses.length === 1 ? 'dirección' : 'direcciones'}`}
+          >
+            {addresses.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {addresses.map((address) => (
+                  <DataCard
+                    key={address.id}
+                    title={address.label || 'Dirección'}
+                    isPrimary={address.isPrimary}
+                    onEdit={() => router.push(`/onboarding?step=2&edit=${address.id}`)}
+                    onDelete={async () => {
+                      if (confirm('¿Eliminar esta dirección?')) {
+                        await apiClient.deleteAddress(address.id);
+                        await loadAllData();
+                      }
+                    }}
+                  >
+                    <InfoItem label="Calle" value={address.street} />
+                    <InfoItem label="Ciudad" value={address.city} />
+                    <InfoItem label="Estado/Región" value={address.state} />
+                    <InfoItem label="País" value={address.country} />
+                    <InfoItem label="Código Postal" value={address.postalCode} />
+                    {address.additionalInfo && (
+                      <InfoItem label="Info Adicional" value={address.additionalInfo} />
+                    )}
+                  </DataCard>
+                ))}
+              </div>
+            ) : (
+              <EmptySection
+                message="No hay direcciones registradas"
+                onAdd={() => router.push('/onboarding?step=2')}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Emergency Contacts */}
+          <CollapsibleSection 
+            title="Contactos de Emergencia" 
+            icon={<Phone className="w-5 h-5 text-blue-600" />}
+            badge={`${emergencyContacts.length} ${emergencyContacts.length === 1 ? 'contacto' : 'contactos'}`}
+          >
+            {emergencyContacts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {emergencyContacts.map((contact) => (
+                  <DataCard
+                    key={contact.id}
+                    title={contact.name}
+                    isPrimary={contact.isPrimary}
+                    onEdit={() => router.push(`/onboarding?step=3&edit=${contact.id}`)}
+                    onDelete={async () => {
+                      if (confirm('¿Eliminar este contacto?')) {
+                        await apiClient.deleteEmergencyContact(contact.id);
+                        await loadAllData();
+                      }
+                    }}
+                  >
+                    <InfoItem label="Teléfono" value={contact.phone} />
+                    <InfoItem label="Relación" value={contact.relationship} />
+                    {contact.email && <InfoItem label="Email" value={contact.email} />}
+                    {contact.address && <InfoItem label="Dirección" value={contact.address} />}
+                  </DataCard>
+                ))}
+              </div>
+            ) : (
+              <EmptySection
+                message="No hay contactos de emergencia registrados"
+                onAdd={() => router.push('/onboarding?step=3')}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Medical Information */}
+          <CollapsibleSection 
+            title="Información Médica"
+            icon={<Heart className="w-5 h-5 text-blue-600" />}
+          >
+            {medicalInfo ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InfoItem label="Tipo de Sangre" value={medicalInfo.bloodType || 'No especificado'} />
+                <InfoItem 
+                  label="Alergias" 
+                  value={medicalInfo.allergies?.join(', ') || 'Ninguna'} 
+                />
+                <InfoItem 
+                  label="Medicamentos" 
+                  value={medicalInfo.medications?.join(', ') || 'Ninguno'} 
+                />
+                <InfoItem 
+                  label="Condiciones" 
+                  value={medicalInfo.conditions?.join(', ') || 'Ninguna'} 
+                />
+                {medicalInfo.notes && (
+                  <div className="md:col-span-2">
+                    <InfoItem label="Notas" value={medicalInfo.notes} />
+                  </div>
+                )}
+                <div className="md:col-span-2 flex justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push('/onboarding?step=4')}
+                  >
+                    Editar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <EmptySection
+                message="No hay información médica registrada"
+                onAdd={() => router.push('/onboarding?step=4')}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Health Insurance */}
+          <CollapsibleSection 
+            title="Seguros de Salud" 
+            icon={<Shield className="w-5 h-5 text-blue-600" />}
+            badge={`${healthInsurances.length} ${healthInsurances.length === 1 ? 'seguro' : 'seguros'}`}
+          >
+            {healthInsurances.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {healthInsurances.map((insurance) => (
+                  <DataCard
+                    key={insurance.id}
+                    title={insurance.provider}
+                    isPrimary={insurance.isPrimary}
+                    onEdit={() => router.push(`/onboarding?step=5&edit=${insurance.id}`)}
+                    onDelete={async () => {
+                      if (confirm('¿Eliminar este seguro?')) {
+                        await apiClient.deleteHealthInsurance(insurance.id);
+                        await loadAllData();
+                      }
+                    }}
+                  >
+                    <InfoItem label="Número de Póliza" value={insurance.policyNumber} />
+                    {insurance.groupNumber && (
+                      <InfoItem label="Número de Grupo" value={insurance.groupNumber} />
+                    )}
+                    <InfoItem label="Tipo de Cobertura" value={insurance.coverageType} />
+                    <InfoItem label="Fecha de Inicio" value={new Date(insurance.startDate).toLocaleDateString()} />
+                    {insurance.endDate && (
+                      <InfoItem label="Fecha de Fin" value={new Date(insurance.endDate).toLocaleDateString()} />
+                    )}
+                  </DataCard>
+                ))}
+              </div>
+            ) : (
+              <EmptySection
+                message="No hay seguros de salud registrados"
+                onAdd={() => router.push('/onboarding?step=5')}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Bank Accounts */}
+          <CollapsibleSection 
+            title="Cuentas Bancarias" 
+            icon={<CreditCard className="w-5 h-5 text-blue-600" />}
+            badge={`${bankAccounts.length} ${bankAccounts.length === 1 ? 'cuenta' : 'cuentas'}`}
+          >
+            {bankAccounts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bankAccounts.map((account) => (
+                  <DataCard
+                    key={account.id}
+                    title={account.bankName}
+                    isPrimary={account.isPrimary}
+                    onEdit={() => router.push(`/onboarding?step=6&edit=${account.id}`)}
+                    onDelete={async () => {
+                      if (confirm('¿Eliminar esta cuenta?')) {
+                        await apiClient.deleteBankAccount(account.id);
+                        await loadAllData();
+                      }
+                    }}
+                  >
+                    <InfoItem label="Titular" value={account.accountHolderName} />
+                    <InfoItem label="Número de Cuenta" value={maskAccountNumber(account.accountNumber)} />
+                    <InfoItem label="Tipo de Cuenta" value={account.accountType} />
+                    {account.routingNumber && (
+                      <InfoItem label="Routing Number" value={account.routingNumber} />
+                    )}
+                    {account.swiftCode && (
+                      <InfoItem label="SWIFT Code" value={account.swiftCode} />
+                    )}
+                  </DataCard>
+                ))}
+              </div>
+            ) : (
+              <EmptySection
+                message="No hay cuentas bancarias registradas"
+                onAdd={() => router.push('/onboarding?step=6')}
+              />
+            )}
+          </CollapsibleSection>
+        </div>
+      </div>
     </div>
-    </ProtectedRoute>
   );
 }

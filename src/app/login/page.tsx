@@ -28,7 +28,19 @@ export default function LoginPage() {
 
     try {
       await apiClient.login(formData);
-      router.push('/dashboard');
+      
+      // Verificar si el usuario tiene información básica
+      const [addresses, contacts] = await Promise.all([
+        apiClient.getAddresses().catch(() => []),
+        apiClient.getEmergencyContacts().catch(() => []),
+      ]);
+
+      // Si no tiene datos básicos, redirigir a onboarding
+      if (addresses.length === 0 && contacts.length === 0) {
+        router.push('/onboarding');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
